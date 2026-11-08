@@ -1,0 +1,27 @@
+# Builds the release zip on version tags and keeps it as a workflow artifact.
+# It does not publish, upload to any addon site, or create a GitHub Release.
+name: Package
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install lupa
+      - run: python scripts/check.py
+      - name: Check tag matches TOC version
+        run: |
+          v=$(sed -n 's/^## Version: *//p' Elysium_ProfessionWheel.toc | tr -d '\r')
+          test "v$v" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} != v$v"; exit 1; }
+      - run: python scripts/package.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ProfessionWheel-zip
+          path: dist/*.zip

@@ -1,0 +1,6 @@
+<Bindings>
+	<!-- No key is assigned by default. Pressing the key toggles the wheel. -->
+	<Binding name="PROFESSIONWHEEL_OPEN" category="ADDONS">
+		ProfessionWheel.OnBinding()
+	</Binding>
+</Bindings>

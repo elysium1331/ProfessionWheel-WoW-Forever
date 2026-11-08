@@ -1,0 +1,55 @@
+name: Bug report
+description: Something in ProfessionWheel doesn't work as described.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Please don't attach whole SavedVariables or WTF folders; they can contain other addons' data and personal information.
+  - type: input
+    id: addon_version
+    attributes:
+      label: ProfessionWheel version
+      description: Output of `/pwheel version`, or the version from the AddOns list.
+    validations:
+      required: true
+  - type: input
+    id: client_build
+    attributes:
+      label: Game client and build
+      description: e.g. WoW Forever 1.60.1.70862 (shown by `/pwheel version`).
+    validations:
+      required: true
+  - type: input
+    id: locale
+    attributes:
+      label: Game language (locale)
+      description: e.g. enUS, deDE.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Bind the key to ...
+        2. Open the wheel and ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected and what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: lua_error
+    attributes:
+      label: Lua error text (if any)
+      description: Enable with `/console scriptErrors 1`, reproduce, then paste the full error. Remove anything personal.
+      render: text
+  - type: input
+    id: other_addons
+    attributes:
+      label: Other addons that might be involved (optional)

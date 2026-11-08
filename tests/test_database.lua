@@ -1,0 +1,62 @@
+local H = ...
+local ns = H.load("Database.lua", {})
+local D = ns.Database
+local test, eq = H.test, H.eq
+
+test("nil gives defaults without reporting a reset", function()
+	local db, report = D.Load(nil)
+	eq(report.reset, false)
+	eq(db.schemaVersion, D.SCHEMA_VERSION)
+	eq(db.wheelSize, D.LIMITS.wheelSize.default)
+	eq(db.showLabels, true)
+	eq(db.showInactive, false)
+	eq(db.position, "CURSOR")
+end)
+
+test("a non-table value resets and reports it", function()
+	local db, report = D.Load("garbage")
+	eq(report.reset, true)
+	eq(db.iconScale, D.LIMITS.iconScale.default)
+end)
+
+test("valid values are kept", function()
+	local db = D.Load({ schemaVersion = 1, wheelSize = 300, iconScale = 1.2, showLabels = false,
+		showInactive = true, position = "SCREEN", tipShown = true })
+	eq(db.wheelSize, 300)
+	eq(db.iconScale, 1.2)
+	eq(db.showLabels, false)
+	eq(db.showInactive, true)
+	eq(db.position, "SCREEN")
+	eq(db.tipShown, true)
+end)
+
+test("out-of-range and wrong-typed fields are repaired", function()
+	local db, report = D.Load({ schemaVersion = 1, wheelSize = 9999, iconScale = "big", showLabels = 1, position = "LEFT" })
+	eq(db.wheelSize, D.LIMITS.wheelSize.max)
+	eq(db.iconScale, D.LIMITS.iconScale.default)
+	eq(db.showLabels, true)
+	eq(db.position, "CURSOR")
+	H.truthy(#report.repaired >= 4, "repairs reported")
+end)
+
+test("schema 0 (no version) is migrated and repaired", function()
+	local db, report = D.Load({ wheelSize = 240 })
+	eq(report.reset, false)
+	eq(db.schemaVersion, 1)
+	eq(db.wheelSize, 240)
+end)
+
+test("a newer schema is kept, not reset", function()
+	local db, report = D.Load({ schemaVersion = 7, wheelSize = 240, future = "x" })
+	eq(report.reset, false)
+	eq(db.schemaVersion, 7)
+	eq(db.future, "x")
+end)
+
+test("reset keeps the same table and restores defaults", function()
+	local db = D.Load({ schemaVersion = 1, wheelSize = 300, junk = true })
+	local same = D.Reset(db)
+	eq(same, db)
+	eq(db.wheelSize, D.LIMITS.wheelSize.default)
+	eq(db.junk, nil)
+end)

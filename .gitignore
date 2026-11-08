@@ -1,0 +1,12 @@
+dist/
+backups/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.vscode/
+.idea/
+*.bak
+*.tmp
+.DS_Store
+Thumbs.db

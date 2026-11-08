@@ -1,0 +1,22 @@
+## Interface: 16001
+## Title: [Elysium] ProfessionWheel
+## Notes: A radial wheel that opens your professions from one key binding.
+## Author: Ryan Novak (elysium1331)
+## Version: 0.1.0
+## Category: Elysium
+## Group: Elysium_ProfessionWheel
+## IconTexture: Interface\Icons\Trade_Engineering
+## SavedVariablesPerCharacter: ProfessionWheelCharDB
+## AddonCompartmentFunc: ProfessionWheel_OnAddonCompartmentClick
+## X-License: MIT
+## X-Website: https://github.com/elysium1331/ProfessionWheel-WoW-Forever
+## X-Verified-Client: WoW Forever 1.60.1.70862
+
+Locales\enUS.lua
+Compat.lua
+WheelMath.lua
+Database.lua
+Professions.lua
+Core.lua
+Wheel.lua
+Settings.lua
