@@ -12,7 +12,7 @@ local L = {
 	RIGHT_CLICK = "Right-click: %s",
 	TRACKING_ON = "%s (on)",
 	TRACKING_OFF = "%s (off)",
-	WHEEL_HINT = "Right-click the center or Escape: close",
+	WHEEL_HINT = "Escape, the key again, or a click in the center: close",
 
 	-- Chat feedback (kept short; never repeated rapidly).
 	MSG_PREFIX = "ProfessionWheel:",
@@ -40,6 +40,7 @@ local L = {
 	ICON_SCALE = "Icon scale",
 	SHOW_LABELS = "Show names",
 	SHOW_INACTIVE = "Show professions with nothing to use (Skinning)",
+	GAME_ICONS = "Use the game's profession icons instead of the painted ones",
 	POSITION = "Open at:",
 	POSITION_CURSOR = "Cursor",
 	POSITION_SCREEN = "Screen center",

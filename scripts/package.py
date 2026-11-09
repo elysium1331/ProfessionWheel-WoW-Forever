@@ -79,6 +79,16 @@ def validate_sources(errors):
                 fail(errors, f"{rel}: single backslash in texture path near {m.group(0)!r}")
 
 
+    for ref in af.media_refs():
+        if not ref.lower().endswith(".tga"):
+            fail(errors, f"runtime texture must be TGA: {ref}")
+        elif not (ROOT / ref).is_file():
+            fail(errors, f"Art.lua references a missing texture: {ref}")
+    icon = af.toc_field("IconTexture")
+    prefix = "Interface\\AddOns\\" + ADDON + "\\"
+    if icon.startswith(prefix) and icon[len(prefix):].replace("\\", "/") not in af.media_refs():
+        fail(errors, f"TOC IconTexture {icon} is not referenced in Art.lua (it would not be packaged)")
+
     for rel in af.LEGAL + af.DOCS:
         if not (ROOT / rel).is_file():
             fail(errors, f"missing release file: {rel}")

@@ -4,6 +4,18 @@ All notable user-facing changes. Format: [Keep a Changelog](https://keepachangel
 Versions follow [Semantic Versioning](https://semver.org/). The saved-settings schema
 version is tracked separately (currently schema 1).
 
+## [0.2.0] - 2026-11-09
+
+New painted look, checked in game on WoW Forever 1.60.1.70862.
+
+### Changed
+- The wheel is redrawn with painted art: a dark disc with a hammered-gold rim,
+  gold slot rings, spokes from a glowing hub, and star accents between slots.
+- Every profession has its own painted icon (all 12 vanilla professions, plus a
+  generic one). Options can switch back to the game's own profession icons.
+- The highlighted profession's name, skill and click actions now show on a dark
+  plate under the wheel instead of in the center.
+
 ## [0.1.0] - 2026-11-08
 
 First release. Tested in game on WoW Forever 1.60.1.70862 (see docs/VALIDATION.md;

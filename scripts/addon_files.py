@@ -37,5 +37,13 @@ def toc_files() -> list:
     return files
 
 
+def media_refs() -> list:
+    """Runtime textures referenced from Art.lua (relative paths inside the addon)."""
+    text = (ROOT / "Art.lua").read_text(encoding="utf-8")
+    # In Lua source each path separator is written as two backslashes.
+    refs = re.findall(r'"Interface\\\\AddOns\\\\' + re.escape(ADDON) + r'\\\\([^"]+)"', text)
+    return sorted({r.replace("\\\\", "/") for r in refs})
+
+
 def release_files() -> list:
-    return list(dict.fromkeys(EXTRA_RUNTIME + toc_files() + LEGAL + DOCS))
+    return list(dict.fromkeys(EXTRA_RUNTIME + toc_files() + media_refs() + LEGAL + DOCS))

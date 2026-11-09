@@ -6,7 +6,7 @@ Part of the **Elysium** addon collection for WoW Forever by
 Open any of your professions from one radial wheel and one key, instead of
 keeping every profession on your action bars.
 
-**Release:** 0.1.0, tested in game on WoW Forever 1.60.1 (see
+**Release:** 0.2.0, tested in game on WoW Forever 1.60.1 (see
 [docs/VALIDATION.md](docs/VALIDATION.md)).
 
 ProfessionWheel is an unofficial community addon. Blizzard Entertainment did not
@@ -49,8 +49,8 @@ make or endorse it.
 
 ## Options
 
-Wheel size, icon scale, names on or off, open at the cursor or screen center, and
-whether professions with nothing to use (Skinning) appear. Settings are saved per
+Wheel size, icon scale, names on or off, open at the cursor or screen center,
+whether professions with nothing to use (Skinning) appear, and painted or game icons. Settings are saved per
 character.
 
 ## Install
@@ -73,4 +73,4 @@ is why the wheel is out-of-combat only. No secure snippets are used.
 
 ## License
 
-MIT for the code. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT for the code and the original artwork. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

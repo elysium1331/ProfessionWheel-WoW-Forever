@@ -23,6 +23,7 @@ local function CopyDefaults()
 		iconScale = Database.LIMITS.iconScale.default,
 		showLabels = true,
 		showInactive = false,
+		gameIcons = false,
 		position = "CURSOR",
 		tipShown = false,
 	}
@@ -42,7 +43,7 @@ local function ClampNumber(value, limit)
 	return value
 end
 
-local BOOLEANS = { showLabels = true, showInactive = false, tipShown = false }
+local BOOLEANS = { showLabels = true, showInactive = false, gameIcons = false, tipShown = false }
 
 -- MIGRATIONS[n] upgrades a table from schema n to n+1 in place. Schema 0 means
 -- "no schemaVersion field" (hand-edited data); its fields are repaired below.

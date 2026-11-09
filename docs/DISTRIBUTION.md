@@ -1,6 +1,6 @@
 # Distribution notes (prepared, not published)
 
-Nothing has been uploaded anywhere. Version covered: 0.1.0.
+Nothing has been uploaded anywhere. Version covered: 0.2.0.
 
 - **Public name:** [Elysium] ProfessionWheel (suggested CurseForge slug: `elysium-professionwheel`)
 - **Folder / TOC name:** `Elysium_ProfessionWheel`, `## Group: Elysium_ProfessionWheel`, `## Category: Elysium`

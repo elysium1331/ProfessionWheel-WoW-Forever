@@ -64,3 +64,18 @@ appeared.
 12. [x] Typing in chat while the wheel is open closes it. Movement keys work while it's open.
 13. [x] Options: size, icon scale, names, cursor / screen center work and persist across `/reload`.
 14. [x] No "addon blocked" popup appears during any of the above.
+
+## 4. Version 0.2.0 (painted look): in-game checklist
+
+Ryan installed 0.2.0 on 2026-11-09 and reported that the new wheel looks good. [x]
+marks what that covers; the other items were not reported separately. The click,
+close and combat code is unchanged from 0.1.0.
+
+Automated: `scripts/check.py` 27/27 tests pass; stub smoke run passes; `scripts/package.py` passes.
+
+1. [x] The wheel shows the painted disc, gold rim, slot rings, spokes, stars and hub; no green/black squares (a missing texture).
+2. [x] Each profession shows its painted icon, centered inside its ring, no pink fringe.
+3. [x] Hovering a slot makes it glow; the name, skill and clicks show under the wheel and stay readable over bright scenery.
+4. [x] Spokes point from the hub to each slot (no crooked or clipped spokes).
+5. [ ] Options: "Use the game's profession icons" switches to the round game icons and back; size and icon scale still look right.
+6. [ ] Everything from 0.1.0 still works (clicks, closing, combat).

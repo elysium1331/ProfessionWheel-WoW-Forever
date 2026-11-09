@@ -15,34 +15,31 @@
 --   * Escape closes through UISpecialFrames; the key binding toggles.
 local _, ns = ...
 
-local L, Compat, WheelMath, Professions = ns.L, ns.Compat, ns.WheelMath, ns.Professions
+local L, Compat, WheelMath, Professions, Art = ns.L, ns.Compat, ns.WheelMath, ns.Professions, ns.Art
 
 local Wheel = {}
 ns.Wheel = Wheel
 
 local CATCHER_NAME = "ElysiumProfessionWheelCatcher"
-local GOLD = { 0.62, 0.52, 0.32, 1 }
-local GOLD_BRIGHT = { 1.0, 0.82, 0.42, 1 }
-local GOLD_DIM = { 0.36, 0.31, 0.22, 1 }
-local TRACKING_ON = { 0.45, 0.85, 0.40, 1 }
-local DARK = { 0.05, 0.045, 0.04, 0.82 }
-local SLOT_DARK = { 0.09, 0.08, 0.07, 0.95 }
+local SLOT_DARK = { 0.07, 0.06, 0.05, 1 }
+-- Vertex tints for the gold slot frame (multiplied with the texture).
+local FRAME_NORMAL = { 0.88, 0.88, 0.88 }
+local FRAME_SELECTED = { 1, 1, 1 }
+local FRAME_TRACKING = { 0.55, 1, 0.55 }
+local FRAME_UNUSABLE = { 0.5, 0.5, 0.5 }
 local HIGHLIGHT_HYSTERESIS = 6
 
 -- View ------------------------------------------------------------------------------
 
-local function MakeDisc(parent, layer, sublevel, color)
-	local tex = parent:CreateTexture(nil, layer, nil, sublevel)
-	tex:SetColorTexture(color[1], color[2], color[3], color[4])
-	local mask = parent:CreateMaskTexture()
+local function Tint(tex, c)
+	tex:SetVertexColor(c[1], c[2], c[3], 1)
+end
+
+local function CircleMask(owner, tex)
+	local mask = owner:CreateMaskTexture()
 	mask:SetTexture(Compat.CIRCLE_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
 	mask:SetAllPoints(tex)
 	tex:AddMaskTexture(mask)
-	return tex
-end
-
-local function SetDiscColor(tex, color)
-	tex:SetColorTexture(color[1], color[2], color[3], color[4])
 end
 
 local View = {}
@@ -54,65 +51,112 @@ function Wheel.CreateView(parent)
 	root:EnableMouse(false)
 	self.root = root
 
-	self.rim = MakeDisc(root, "BACKGROUND", 0, GOLD_DIM)
-	self.rim:SetPoint("CENTER")
-	self.bg = MakeDisc(root, "BACKGROUND", 1, DARK)
-	self.bg:SetPoint("CENTER")
-	self.hubRim = MakeDisc(root, "BORDER", 0, GOLD_DIM)
-	self.hubRim:SetPoint("CENTER")
-	self.hub = MakeDisc(root, "BORDER", 1, SLOT_DARK)
-	self.hub:SetPoint("CENTER")
+	self.disc = root:CreateTexture(nil, "BACKGROUND", nil, 0)
+	self.disc:SetTexture(Art.DISC)
+	self.disc:SetAllPoints(root)
 
-	self.centerText = root:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	self.centerText:SetPoint("CENTER")
-	self.centerText:SetJustifyH("CENTER")
-	self.centerText:SetWordWrap(true)
-	self.centerText:SetSpacing(2)
+	self.spokes, self.stars = {}, {}
+	for i = 1, WheelMath.MAX_SLOTS do
+		local spoke = root:CreateTexture(nil, "BORDER", nil, 0)
+		spoke:SetTexture(Art.SPOKE)
+		self.spokes[i] = spoke
+		local star = root:CreateTexture(nil, "BORDER", nil, 1)
+		star:SetTexture(Art.STAR)
+		self.stars[i] = star
+	end
+
+	self.hubGlow = root:CreateTexture(nil, "ARTWORK", nil, 0)
+	self.hubGlow:SetTexture(Art.HUB_GLOW)
+	self.hubGlow:SetBlendMode("ADD")
+	self.hubGlow:SetPoint("CENTER")
+	self.hub = root:CreateTexture(nil, "ARTWORK", nil, 1)
+	self.hub:SetTexture(Art.HUB)
+	self.hub:SetPoint("CENTER")
+	self.hub:SetVertexColor(0.8, 0.8, 0.8, 1)
 
 	self.slots = {}
 	for i = 1, WheelMath.MAX_SLOTS do
 		local slot = CreateFrame("Frame", nil, root)
 		slot:EnableMouse(false)
-		slot.glow = MakeDisc(slot, "BACKGROUND", 0, { GOLD_BRIGHT[1], GOLD_BRIGHT[2], GOLD_BRIGHT[3], 0.22 })
+		slot.glow = slot:CreateTexture(nil, "BACKGROUND", nil, 0)
+		slot.glow:SetTexture(Art.SLOT_GLOW)
+		slot.glow:SetBlendMode("ADD")
 		slot.glow:SetPoint("CENTER")
 		slot.glow:Hide()
-		slot.ring = MakeDisc(slot, "BORDER", 0, GOLD)
-		slot.ring:SetPoint("CENTER")
-		slot.base = MakeDisc(slot, "BORDER", 1, SLOT_DARK)
+		slot.base = slot:CreateTexture(nil, "BORDER", nil, 0)
+		slot.base:SetColorTexture(SLOT_DARK[1], SLOT_DARK[2], SLOT_DARK[3], SLOT_DARK[4])
 		slot.base:SetPoint("CENTER")
+		CircleMask(slot, slot.base)
+		-- Painted icons carry their own transparency; game icons are square and are
+		-- cropped round by a mask.
 		slot.icon = slot:CreateTexture(nil, "ARTWORK")
 		slot.icon:SetPoint("CENTER")
-		slot.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-		local mask = slot:CreateMaskTexture()
-		mask:SetTexture(Compat.CIRCLE_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-		mask:SetAllPoints(slot.icon)
-		slot.icon:AddMaskTexture(mask)
+		slot.gameIcon = slot:CreateTexture(nil, "ARTWORK")
+		slot.gameIcon:SetPoint("CENTER")
+		slot.gameIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+		CircleMask(slot, slot.gameIcon)
+		slot.frame = slot:CreateTexture(nil, "OVERLAY", nil, 0)
+		slot.frame:SetTexture(Art.SLOT)
+		slot.frame:SetAllPoints(slot)
 		slot.label = slot:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 		slot.label:SetJustifyH("CENTER")
 		slot:Hide()
 		self.slots[i] = slot
 	end
 
+	-- Details of the highlighted profession, on a dark plate under the wheel.
+	self.infoText = root:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+	self.infoText:SetPoint("TOP", root, "BOTTOM", 0, -10)
+	self.infoText:SetJustifyH("CENTER")
+	self.infoText:SetSpacing(3)
+	self.infoBg = root:CreateTexture(nil, "BACKGROUND", nil, -1)
+	self.infoBg:SetColorTexture(0, 0, 0, 0.6)
+	self.infoBg:SetPoint("TOPLEFT", self.infoText, "TOPLEFT", -10, 5)
+	self.infoBg:SetPoint("BOTTOMRIGHT", self.infoText, "BOTTOMRIGHT", 10, -5)
+
 	self.hint = root:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-	self.hint:SetPoint("TOP", root, "BOTTOM", 0, -4)
+	self.hint:SetPoint("TOP", self.infoText, "BOTTOM", 0, -10)
 	self.hint:SetText(L.WHEEL_HINT)
 	return self
 end
 
 -- Sizes everything for a wheel diameter, icon scale and slot count.
 function View:Layout(size, iconScale, showLabels, count)
-	local slotSize = math.floor(size * 0.2 * iconScale + 0.5)
-	slotSize = math.max(32, math.min(slotSize, math.floor(size * 0.3)))
-	local radius = size / 2 - slotSize / 2 - 10
+	local slotSize = math.floor(size * 0.27 * iconScale + 0.5)
+	slotSize = math.max(34, math.min(slotSize, math.floor(size * 0.32)))
+	local radius = size / 2 - slotSize / 2 - size * 0.06
 	self.size, self.slotSize, self.radius, self.count = size, slotSize, radius, count
 	self.deadZone = math.floor(size * 0.17)
 
 	self.root:SetSize(size, size)
-	self.rim:SetSize(size, size)
-	self.bg:SetSize(size - 4, size - 4)
-	self.hubRim:SetSize(self.deadZone * 2 + 2, self.deadZone * 2 + 2)
-	self.hub:SetSize(self.deadZone * 2, self.deadZone * 2)
-	self.centerText:SetWidth(self.deadZone * 2 + 40)
+	local hub = math.floor(size * 0.18)
+	self.hub:SetSize(hub, hub)
+	self.hubGlow:SetSize(hub * 1.8, hub * 1.8)
+
+	local sector = 360 / math.max(count, 1)
+	for i = 1, WheelMath.MAX_SLOTS do
+		local spoke, star = self.spokes[i], self.stars[i]
+		if i <= count then
+			-- The spoke art is a horizontal bar spanning 90% of a square texture;
+			-- it runs from the center to the slot, under both.
+			local len = radius / 0.9
+			local x, y = WheelMath.SlotOffset(i, count, radius / 2)
+			spoke:SetSize(len, len)
+			spoke:ClearAllPoints()
+			spoke:SetPoint("CENTER", self.root, "CENTER", x, y)
+			spoke:SetRotation(math.rad(90 - (i - 1) * sector))
+			spoke:Show()
+			local starAngle = math.rad((i - 0.5) * sector)
+			local starRadius = radius + slotSize * 0.05
+			star:SetSize(slotSize * 0.34, slotSize * 0.34)
+			star:ClearAllPoints()
+			star:SetPoint("CENTER", self.root, "CENTER", starRadius * math.sin(starAngle), starRadius * math.cos(starAngle))
+			star:SetShown(count > 1)
+		else
+			spoke:Hide()
+			star:Hide()
+		end
+	end
 
 	for i, slot in ipairs(self.slots) do
 		if i <= count then
@@ -120,16 +164,16 @@ function View:Layout(size, iconScale, showLabels, count)
 			slot:SetSize(slotSize, slotSize)
 			slot:ClearAllPoints()
 			slot:SetPoint("CENTER", self.root, "CENTER", x, y)
-			slot.glow:SetSize(slotSize + 14, slotSize + 14)
-			slot.ring:SetSize(slotSize + 4, slotSize + 4)
-			slot.base:SetSize(slotSize, slotSize)
-			slot.icon:SetSize(slotSize - 6, slotSize - 6)
+			slot.glow:SetSize(slotSize * 1.5, slotSize * 1.5)
+			slot.base:SetSize(slotSize * 0.88, slotSize * 0.88)
+			slot.icon:SetSize(slotSize * 0.84, slotSize * 0.84)
+			slot.gameIcon:SetSize(slotSize * 0.8, slotSize * 0.8)
 			slot.label:ClearAllPoints()
-			slot.label:SetWidth(slotSize + 36)
+			slot.label:SetWidth(slotSize + 40)
 			if y < -radius * 0.7 then
-				slot.label:SetPoint("BOTTOM", slot, "TOP", 0, 2)
+				slot.label:SetPoint("BOTTOM", slot, "TOP", 0, 1)
 			else
-				slot.label:SetPoint("TOP", slot, "BOTTOM", 0, -2)
+				slot.label:SetPoint("TOP", slot, "BOTTOM", 0, -1)
 			end
 			slot.label:SetShown(showLabels)
 			slot:Show()
@@ -140,20 +184,25 @@ function View:Layout(size, iconScale, showLabels, count)
 end
 
 -- Fills the slots from profession entries (see Professions.Build).
-function View:Refresh(entries)
+function View:Refresh(entries, gameIcons)
 	self.entries = entries
 	for i, slot in ipairs(self.slots) do
 		local entry = entries[i]
 		slot.entry = entry
 		if entry then
-			slot.icon:SetTexture(entry.icon or Compat.QUESTION_MARK)
-			slot.label:SetText(entry.name)
+			local path, painted = Art.IconFor(entry, gameIcons)
+			slot.icon:SetShown(painted)
+			slot.gameIcon:SetShown(not painted)
+			local tex = painted and slot.icon or slot.gameIcon
+			tex:SetTexture(path)
 			local usable = entry.primary ~= nil
-			slot.icon:SetDesaturated(not usable)
-			slot.icon:SetVertexColor(usable and 1 or 0.6, usable and 1 or 0.6, usable and 1 or 0.6, 1)
-			slot.label:SetTextColor(usable and 0.95 or 0.55, usable and 0.93 or 0.55, usable and 0.86 or 0.55)
+			tex:SetDesaturated(not usable)
+			local shade = usable and 1 or 0.55
+			tex:SetVertexColor(shade, shade, shade, 1)
+			slot.label:SetText(entry.name)
+			slot.label:SetTextColor(usable and 0.95 or 0.55, usable and 0.9 or 0.55, usable and 0.78 or 0.55)
 			local trackingOn = Professions.IsTrackingActive(entry.primary) or Professions.IsTrackingActive(entry.secondary)
-			slot.ringColor = (trackingOn and TRACKING_ON) or (usable and GOLD) or GOLD_DIM
+			slot.frameTint = (trackingOn and FRAME_TRACKING) or (usable and FRAME_NORMAL) or FRAME_UNUSABLE
 		end
 		slot.glow:Hide()
 	end
@@ -167,34 +216,37 @@ local function DescribeAction(action)
 	return action.name
 end
 
--- Highlights one slot (or none) and updates the center text.
+-- Highlights one slot (or none) and updates the details under the wheel.
 function View:SetHighlight(index)
 	self.highlight = index
 	for i, slot in ipairs(self.slots) do
 		local on = i == index
 		slot.glow:SetShown(on)
-		SetDiscColor(slot.ring, on and GOLD_BRIGHT or (slot.ringColor or GOLD))
+		if slot.entry then
+			Tint(slot.frame, on and FRAME_SELECTED or slot.frameTint or FRAME_NORMAL)
+		end
 	end
+	self.hubGlow:SetAlpha(index and 0.75 or 0.45)
 	local entry = index and self.entries[index]
 	if not entry then
-		self.centerText:SetFontObject("GameFontDisableSmall")
-		self.centerText:SetText(L.CHOOSE)
+		self.infoText:SetText("|cffbfb39a" .. L.CHOOSE .. "|r")
 		return
 	end
-	local lines = { "|cffffd200" .. entry.name .. "|r" }
+	local head = "|cffffd200" .. entry.name .. "|r"
 	if entry.maxRank and entry.maxRank > 0 then
-		lines[#lines + 1] = L.SKILL:format(entry.rank or 0, entry.maxRank)
+		head = head .. "   |cffbfb39a" .. L.SKILL:format(entry.rank or 0, entry.maxRank) .. "|r"
 	end
+	local lines = { head }
 	if entry.primary then
-		lines[#lines + 1] = L.LEFT_CLICK:format(DescribeAction(entry.primary))
+		local actions = L.LEFT_CLICK:format(DescribeAction(entry.primary))
 		if entry.secondary then
-			lines[#lines + 1] = L.RIGHT_CLICK:format(DescribeAction(entry.secondary))
+			actions = actions .. "     " .. L.RIGHT_CLICK:format(DescribeAction(entry.secondary))
 		end
+		lines[#lines + 1] = actions
 	else
-		lines[#lines + 1] = L.NOTHING_TO_USE
+		lines[#lines + 1] = "|cff999999" .. L.NOTHING_TO_USE .. "|r"
 	end
-	self.centerText:SetFontObject("GameFontHighlightSmall")
-	self.centerText:SetText(table.concat(lines, "\n"))
+	self.infoText:SetText(table.concat(lines, "\n"))
 end
 
 -- Controller -------------------------------------------------------------------------
@@ -312,8 +364,8 @@ local function PlaceWheel(db)
 	else
 		cx, cy = Compat.GetCursorInFrameSpace(catcher)
 	end
-	-- Extra margin keeps outer labels and the hint on screen.
-	cx, cy = WheelMath.ClampCenter(cx, cy, db.wheelSize / 2 + 24, w, h)
+	-- Extra margin keeps the details and hint under the wheel on screen.
+	cx, cy = WheelMath.ClampCenter(cx, cy, db.wheelSize / 2 + 64, w, h)
 	centerX, centerY = cx, cy
 	view.root:ClearAllPoints()
 	view.root:SetPoint("CENTER", catcher, "BOTTOMLEFT", cx, cy)
@@ -341,7 +393,7 @@ function Wheel.Open()
 	entries = visible
 	view.highlight = nil
 	view:Layout(db.wheelSize, db.iconScale, db.showLabels, #entries)
-	view:Refresh(entries)
+	view:Refresh(entries, db.gameIcons)
 	PlaceWheel(db)
 	ApplyHighlight(nil)
 	isOpen = true
